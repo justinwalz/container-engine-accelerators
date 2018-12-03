@@ -17,6 +17,10 @@ set -o errexit
 set -o pipefail
 set -u
 
+# This modified version of the script uses a nvidia driver runfile
+# that is baked into the EC2 AMI at /opt/ami/NVIDIA-Linux-x86_64-384.111.run
+# This script itself is also baked into the AMI at /opt/ami/nvidia-driver-installer-ubuntu-entrypoint.sh
+# Doing this removes the dependency on github and us.download.nvidia.com
 set -x
 NVIDIA_DRIVER_VERSION="${NVIDIA_DRIVER_VERSION:-384.111}"
 NVIDIA_DRIVER_DOWNLOAD_URL_DEFAULT="https://us.download.nvidia.com/tesla/${NVIDIA_DRIVER_VERSION}/NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_VERSION}.run"
@@ -67,9 +71,13 @@ update_container_ld_cache() {
 }
 
 download_kernel_src() {
-  echo "Downloading kernel sources..."
-  apt-get update && apt-get install -y linux-headers-${KERNEL_VERSION}
-  echo "Downloading kernel sources... DONE."
+  # # original source
+  # echo "Downloading kernel sources..."
+  # apt-get update && apt-get install -y linux-headers-${KERNEL_VERSION}
+  # echo "Downloading kernel sources... DONE."
+
+  # original source
+  echo "Using previously downloaded kernel sources... DONE."
 }
 
 configure_nvidia_installation_dirs() {
@@ -111,11 +119,19 @@ configure_nvidia_installation_dirs() {
 }
 
 download_nvidia_installer() {
-  echo "Downloading Nvidia installer..."
+  # # original source
+  # echo "Downloading Nvidia installer..."
+  # pushd "${NVIDIA_INSTALL_DIR_CONTAINER}"
+  # curl -L -S -f "${NVIDIA_DRIVER_DOWNLOAD_URL}" -o "${NVIDIA_INSTALLER_RUNFILE}"
+  # popd
+  # echo "Downloading Nvidia installer... DONE."
+
+  # updated
+  echo "Copying Downloaded Nvidia installer..."
   pushd "${NVIDIA_INSTALL_DIR_CONTAINER}"
-  curl -L -S -f "${NVIDIA_DRIVER_DOWNLOAD_URL}" -o "${NVIDIA_INSTALLER_RUNFILE}"
+  cp /opt/ami/NVIDIA-Linux-x86_64-384.111.run "${NVIDIA_INSTALLER_RUNFILE}"
   popd
-  echo "Downloading Nvidia installer... DONE."
+  echo "Copying Downloaded Nvidia installer... DONE."
 }
 
 run_nvidia_installer() {
